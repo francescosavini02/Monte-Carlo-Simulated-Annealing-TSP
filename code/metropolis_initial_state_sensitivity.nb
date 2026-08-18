@@ -1,0 +1,811 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 14.0' *)
+
+(*CacheID: 234*)
+
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[TextData[StyleBox["Metodi  Monte  Carlo  a  catena  di  Markov : \
+algoritmo  di  Metropolis  per  il  TSP (variante senza obbligo di ritorno \
+alla stessa citt\[AGrave] di partenza): diversi stati iniziali",
+ FontSize->39]], "Title",
+ CellChangeTimes->{{3.9318527404383335`*^9, 
+  3.931852756716751*^9}},ExpressionUUID->"5a9dad10-741b-8e48-8eea-\
+3fbfb2884707"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{
+    "Fissato", " ", "un", " ", "valore", " ", "di", " ", "beta", " ", 
+     "abbastanza", " ", "alto"}], ",", " ", 
+    RowBox[{
+    "cio\[EGrave]", " ", "un", " ", "parametro", " ", "di", " ", "controllo", 
+     " ", "basso", " ", 
+     RowBox[{"(", 
+      RowBox[{
+      "scarsa", " ", "possibilit\[AGrave]", " ", "di", " ", "accettazione", 
+       " ", "di", " ", "scelte", " ", "peggiorative"}], ")"}], " ", "si", " ",
+      "costruisce", " ", "un", " ", "algoritmo", " ", "basato", " ", "sulla", 
+     " ", "regola", " ", "di", " ", 
+     RowBox[{"Metropolis", ".", " ", "Ad"}], " ", "ogni", " ", "iterazione"}],
+     ",", " ", 
+    RowBox[{
+    "si", " ", "cambia", " ", "lo", " ", "stato", " ", "iniziale", " ", "e", 
+     " ", "si", " ", "osserva", " ", "se", " ", "si", " ", "arriva", " ", 
+     "sempre", " ", "allo", " ", "stesso", " ", "minimo", " ", "o", " ", "se",
+      " ", "si", " ", "ottengono", " ", "risultati", " ", 
+     RowBox[{"diversi", ".", " ", "Per"}], " ", "n", " ", "piccolo"}], ",", 
+    " ", 
+    RowBox[{
+     RowBox[{
+     "la", " ", "funzione", " ", "distanza", " ", "presenta", " ", "un", " ", 
+      "unico", " ", "minimo", " ", "che", " ", "\[EGrave]", " ", "assoluto"}],
+      ";", " ", 
+     RowBox[{
+     "al", " ", "crescere", " ", "del", " ", "numero", " ", "di", " ", 
+      "citt\[AGrave]", " ", "aumenta", " ", "il", " ", "numero", " ", "di", 
+      " ", "minimi", " ", "relativi"}]}], ",", " ", 
+    RowBox[{
+    "con", " ", "conseguente", " ", "perdita", " ", "di", " ", 
+     "affidabilit\[AGrave]", " ", 
+     RowBox[{"dell", "'"}], "algoritmo", " ", "come", " ", "metodo", " ", 
+     "di", " ", 
+     RowBox[{"ottimizzazione", "."}]}]}], "*)"}], "\[IndentingNewLine]", 
+  "\[IndentingNewLine]", 
+  RowBox[{"(*", 
+   RowBox[{"Numero", " ", "di", " ", "citt\[AGrave]"}], "*)"}], 
+  RowBox[{
+   RowBox[{
+    RowBox[{"n", "=", "10"}], ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{"Dati", " ", "delle", " ", "citt\[AGrave]"}], "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"citt\[AGrave]", "=", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Amsterdam\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "52.3676"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "4.9041"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Athens\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "37.9838"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "23.7275"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Barcelona\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "41.3851"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "2.1734"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Belgrade\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "44.7866"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "20.4489"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Berlin\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "52.5200"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "13.4050"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Bern\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "46.9481"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "7.4474"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Bratislava\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "48.1486"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "17.1077"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Brussels\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "50.8503"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "4.3517"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Bucharest\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "44.4268"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "26.1025"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Budapest\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "47.4979"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "19.0402"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Copenhagen\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "55.6761"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "12.5683"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Dublin\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "53.3498"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", 
+          RowBox[{"-", "6.2603"}]}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Edinburgh\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "55.9533"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", 
+          RowBox[{"-", "3.1883"}]}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Frankfurt\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "50.1109"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "8.6821"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Geneva\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "46.2044"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "6.1432"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Helsinki\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "60.1695"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "24.9354"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Istanbul\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "41.0082"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "28.9784"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Kiev\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "50.4501"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "30.5234"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Lisbon\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "38.7223"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", 
+          RowBox[{"-", "9.1393"}]}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Ljubljana\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "46.0569"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "14.5058"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<London\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "51.5074"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", 
+          RowBox[{"-", "0.1278"}]}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Luxembourg\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "49.6116"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "6.1319"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Madrid\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "40.4168"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", 
+          RowBox[{"-", "3.7038"}]}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Milan\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "45.4642"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "9.1900"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Monaco\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "43.7384"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "7.4246"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Moscow\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "55.7558"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "37.6173"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Munich\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "48.1351"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "11.5820"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Oslo\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "59.9139"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "10.7522"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Paris\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "48.8566"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "2.3522"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Prague\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "50.0755"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "14.4378"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Reykjavik\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "64.1355"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", 
+          RowBox[{"-", "21.8954"}]}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Riga\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "56.9496"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "24.1052"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Sarajevo\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "43.8563"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "18.4131"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Sofia\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "42.6977"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "23.3219"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Stockholm\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "59.3293"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "18.0686"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Tallinn\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "59.4370"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "24.7535"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Tirana\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "41.3275"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "19.8189"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Valletta\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "35.8989"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "14.5146"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Vienna\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "48.2082"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "16.3738"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Vilnius\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "54.6872"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "25.2797"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Warsaw\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "52.2297"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "21.0122"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Zagreb\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "45.8150"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "15.9819"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Zurich\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "47.3769"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "8.5417"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Seville\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "37.3891"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", 
+          RowBox[{"-", "5.9845"}]}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Naples\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "40.8522"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "14.2681"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Lyon\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "45.7640"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "4.8357"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Porto\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "41.1579"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", 
+          RowBox[{"-", "8.6291"}]}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Gothenburg\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "57.7089"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "11.9746"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Marseille\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "43.2965"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "5.3698"}]}], "|>"}], ",", 
+       RowBox[{"<|", 
+        RowBox[{
+         RowBox[{"\"\<nome\>\"", "->", "\"\<Cologne\>\""}], ",", 
+         RowBox[{"\"\<lat\>\"", "->", "50.9375"}], ",", 
+         RowBox[{"\"\<long\>\"", "->", "6.9603"}]}], "|>"}]}], "}"}]}], ";"}],
+    "\n", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Funzione", " ", "per", " ", "creare", " ", "lo", " ", "stato", " ", 
+     "iniziale", " ", "con", " ", "n", " ", "citt\[AGrave]"}], "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"creaStato", "[", 
+     RowBox[{"citt\[AGrave]_", ",", "n_"}], "]"}], ":=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", "scelte", "}"}], ",", 
+      RowBox[{
+       RowBox[{"scelte", "=", 
+        RowBox[{"RandomSample", "[", 
+         RowBox[{
+          RowBox[{"citt\[AGrave]", "[", 
+           RowBox[{"[", 
+            RowBox[{"2", ";;", 
+             RowBox[{"Length", "[", "citt\[AGrave]", "]"}]}], "]"}], "]"}], 
+          ",", 
+          RowBox[{"n", "-", "1"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"scelte", "=", 
+        RowBox[{"Prepend", "[", 
+         RowBox[{"scelte", ",", 
+          RowBox[{"<|", 
+           RowBox[{
+            RowBox[{"\"\<nome\>\"", "->", "\"\<Rome\>\""}], ",", 
+            RowBox[{"\"\<lat\>\"", "->", "41.8992"}], ",", 
+            RowBox[{"\"\<long\>\"", "->", "12.5450"}]}], "|>"}]}], "]"}]}], 
+       ";", 
+       RowBox[{"(*", 
+        RowBox[{"parto", " ", "sempre", " ", "da", " ", "Roma"}], "*)"}], 
+       "scelte"}]}], "]"}]}], "\[IndentingNewLine]", "\n", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Funzione", " ", "per", " ", "calcolare", " ", "la", " ", "distanza", " ",
+      "tra", " ", "due", " ", "citt\[AGrave]"}], "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"distanza", "[", 
+     RowBox[{"citt\[AGrave]1_", ",", "citt\[AGrave]2_"}], "]"}], ":=", 
+    RowBox[{"QuantityMagnitude", "[", 
+     RowBox[{"GeoDistance", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"citt\[AGrave]1", "[", 
+          RowBox[{"[", "\"\<lat\>\"", "]"}], "]"}], ",", 
+         RowBox[{"citt\[AGrave]1", "[", 
+          RowBox[{"[", "\"\<long\>\"", "]"}], "]"}]}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"citt\[AGrave]2", "[", 
+          RowBox[{"[", "\"\<lat\>\"", "]"}], "]"}], ",", 
+         RowBox[{"citt\[AGrave]2", "[", 
+          RowBox[{"[", "\"\<long\>\"", "]"}], "]"}]}], "}"}]}], "]"}], 
+     "]"}]}], "\[IndentingNewLine]", "\n", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Funzione", " ", "per", " ", "calcolare", " ", "la", " ", "distanza", " ",
+      "totale", " ", "di", " ", "un", " ", "percorso"}], "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"distanzatot", "[", "stato_", "]"}], ":=", 
+    RowBox[{"Total", "[", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"distanza", "[", 
+        RowBox[{
+         RowBox[{"stato", "[", 
+          RowBox[{"[", "i", "]"}], "]"}], ",", 
+         RowBox[{"stato", "[", 
+          RowBox[{"[", 
+           RowBox[{"i", "+", "1"}], "]"}], "]"}]}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "1", ",", 
+         RowBox[{
+          RowBox[{"Length", "[", "stato", "]"}], "-", "1"}]}], "}"}]}], "]"}],
+      "]"}]}], "\[IndentingNewLine]", "\n", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Funzione", " ", "per", " ", "stampare", " ", "il", " ", "percorso"}], 
+    "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"stampa", "[", "stato_", "]"}], ":=", 
+    RowBox[{"StringJoin", "[", 
+     RowBox[{"Riffle", "[", 
+      RowBox[{
+       RowBox[{"stato", "[", 
+        RowBox[{"[", 
+         RowBox[{"All", ",", "\"\<nome\>\""}], "]"}], "]"}], ",", 
+       "\"\<, \>\""}], "]"}], "]"}]}], "\[IndentingNewLine]", "\n", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Funzione", " ", "per", " ", "creare", " ", "un", " ", "nuovo", " ", 
+     "stato"}], "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"creaNuovoStato", "[", "stato_", "]"}], ":=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+       "rand1", ",", "rand2", ",", "minRand", ",", "maxRand", ",", 
+        "invertito"}], "}"}], ",", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"rand1", ",", "rand2"}], "}"}], "=", 
+        RowBox[{"RandomInteger", "[", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{"2", ",", 
+            RowBox[{"Length", "[", "stato", "]"}]}], "}"}], ",", "2"}], 
+         "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"minRand", ",", "maxRand"}], "}"}], "=", 
+        RowBox[{"Sort", "[", 
+         RowBox[{"{", 
+          RowBox[{"rand1", ",", "rand2"}], "}"}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"invertito", "=", 
+        RowBox[{"Reverse", "[", 
+         RowBox[{"stato", "[", 
+          RowBox[{"[", 
+           RowBox[{"minRand", ";;", "maxRand"}], "]"}], "]"}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"Join", "[", 
+        RowBox[{
+         RowBox[{"stato", "[", 
+          RowBox[{"[", 
+           RowBox[{"1", ";;", 
+            RowBox[{"minRand", "-", "1"}]}], "]"}], "]"}], ",", "invertito", 
+         ",", 
+         RowBox[{"stato", "[", 
+          RowBox[{"[", 
+           RowBox[{
+            RowBox[{"maxRand", "+", "1"}], ";;", 
+            RowBox[{"Length", "[", "stato", "]"}]}], "]"}], "]"}]}], 
+        "]"}]}]}], "]"}]}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Funzione", " ", "per", " ", "stampare", " ", "i", " ", "nomi", " ", 
+     "delle", " ", "citt\[AGrave]", " ", "nel", " ", "percorso", " ", 
+     "minimo"}], "*)"}], "\n", 
+   RowBox[{
+    RowBox[{"stampaNomiPercorsoMinimo", "[", "percorsoMinimo_", "]"}], ":=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", "nomiCitt\[AGrave]", "}"}], ",", 
+      RowBox[{
+       RowBox[{"nomiCitt\[AGrave]", "=", 
+        RowBox[{"percorsoMinimo", "[", 
+         RowBox[{"[", 
+          RowBox[{"All", ",", "\"\<nome\>\""}], "]"}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"Print", "[", 
+        RowBox[{"StringJoin", "[", 
+         RowBox[{"Riffle", "[", 
+          RowBox[{"nomiCitt\[AGrave]", ",", "\"\<, \>\""}], "]"}], "]"}], 
+        "]"}]}]}], "]"}]}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{"Parametri", " ", "per", " ", 
+     RowBox[{"l", "'"}], "algoritmo", " ", "di", " ", "Metropolis"}], "*)"}], 
+   "\n", 
+   RowBox[{
+    RowBox[{"rip", "=", 
+     RowBox[{"10", "*", "n"}]}], ";"}], " ", 
+   RowBox[{"(*", 
+    RowBox[{
+    "numero", " ", "di", " ", "ripetizioni", " ", "per", " ", "ciascuna", " ",
+      "simulazione"}], "*)"}], "\n", 
+   RowBox[{
+    RowBox[{"beta", "=", "0.1"}], ";"}], " ", 
+   RowBox[{"(*", 
+    RowBox[{"valore", " ", "di", " ", "beta"}], "*)"}], "\n", 
+   RowBox[{
+    RowBox[{"nTest", "=", "6"}], ";"}], " ", 
+   RowBox[{"(*", 
+    RowBox[{
+    "numero", " ", "di", " ", "volte", " ", "che", " ", "ripeto", " ", "il", 
+     " ", "test", " ", "con", " ", "il", " ", "cambio", " ", "di", " ", 
+     "stato", " ", "iniziale"}], "*)"}], "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{"Inizializzazione", " ", "delle", " ", "variabili"}], "*)"}], 
+   "\n", 
+   RowBox[{
+    RowBox[{"numAccettazioni", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{"0", ",", "nTest"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"minimi", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{"Infinity", ",", "nTest"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"storia", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"Table", "[", 
+        RowBox[{"0", ",", 
+         RowBox[{"rip", "+", "1"}]}], "]"}], ",", "nTest"}], "]"}]}], ";"}], 
+   "\n", 
+   RowBox[{
+    RowBox[{"memorizzaPercorsi", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"{", "}"}], ",", "nTest"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", "\n", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{"Creazione", " ", "dello", " ", "stato", " ", "iniziale"}], 
+    "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"statoIniz", "=", 
+     RowBox[{"creaStato", "[", 
+      RowBox[{"citt\[AGrave]", ",", "n"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"Print", "[", 
+     RowBox[{"\"\<Vettore di stato iniziale: \>\"", ",", 
+      RowBox[{"stampa", "[", "statoIniz", "]"}]}], "]"}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"stato", "=", "statoIniz"}], ";"}], "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{"Algoritmo", " ", "di", " ", "Metropolis"}], "*)"}], "\n", 
+   RowBox[{"For", "[", 
+    RowBox[{
+     RowBox[{"j", "=", "1"}], ",", 
+     RowBox[{"j", "<=", "nTest"}], ",", 
+     RowBox[{"j", "++"}], ",", 
+     RowBox[{
+      RowBox[{"stato", "=", 
+       RowBox[{"creaStato", "[", 
+        RowBox[{"stato", ",", "n"}], "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"minimi", "[", 
+        RowBox[{"[", "j", "]"}], "]"}], "=", 
+       RowBox[{"distanzatot", "[", "stato", "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"memorizzaPercorsi", "[", 
+        RowBox[{"[", "j", "]"}], "]"}], "=", "stato"}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"storia", "[", 
+        RowBox[{"[", 
+         RowBox[{"j", ",", "1"}], "]"}], "]"}], "=", 
+       RowBox[{"distanzatot", "[", "stato", "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"For", "[", 
+       RowBox[{
+        RowBox[{"i", "=", "1"}], ",", 
+        RowBox[{"i", "<=", "rip"}], ",", 
+        RowBox[{"i", "++"}], ",", 
+        RowBox[{
+         RowBox[{"nuovostato", "=", 
+          RowBox[{"creaNuovoStato", "[", "stato", "]"}]}], ";", 
+         "\[IndentingNewLine]", 
+         RowBox[{"varCosto", "=", 
+          RowBox[{
+           RowBox[{"distanzatot", "[", "nuovostato", "]"}], "-", 
+           RowBox[{"distanzatot", "[", "stato", "]"}]}]}], ";", 
+         "\[IndentingNewLine]", 
+         RowBox[{"If", "[", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"varCosto", "<", "0"}], "||", 
+            RowBox[{
+             RowBox[{"Exp", "[", 
+              RowBox[{
+               RowBox[{"-", "beta"}], "*", "varCosto"}], "]"}], ">", 
+             RowBox[{"RandomReal", "[", "]"}]}]}], ",", 
+           RowBox[{
+            RowBox[{"stato", "=", "nuovostato"}], ";", "\[IndentingNewLine]", 
+            RowBox[{
+             RowBox[{"numAccettazioni", "[", 
+              RowBox[{"[", "j", "]"}], "]"}], "++"}], ";", 
+            "\[IndentingNewLine]", 
+            RowBox[{"If", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"distanzatot", "[", "stato", "]"}], "<", 
+               RowBox[{"minimi", "[", 
+                RowBox[{"[", "j", "]"}], "]"}]}], ",", 
+              RowBox[{
+               RowBox[{
+                RowBox[{"minimi", "[", 
+                 RowBox[{"[", "j", "]"}], "]"}], "=", 
+                RowBox[{"distanzatot", "[", "stato", "]"}]}], ";", 
+               "\[IndentingNewLine]", 
+               RowBox[{
+                RowBox[{"memorizzaPercorsi", "[", 
+                 RowBox[{"[", "j", "]"}], "]"}], "=", "stato"}], ";"}]}], 
+             "]"}], ";"}]}], "]"}], ";", "\[IndentingNewLine]", 
+         RowBox[{
+          RowBox[{"storia", "[", 
+           RowBox[{"[", 
+            RowBox[{"j", ",", 
+             RowBox[{"i", "+", "1"}]}], "]"}], "]"}], "=", 
+          RowBox[{"distanzatot", "[", "stato", "]"}]}], ";"}]}], "]"}], 
+      ";"}]}], "]"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"numMinSim", "=", 
+     RowBox[{"Position", "[", 
+      RowBox[{"minimi", ",", 
+       RowBox[{"Min", "[", "minimi", "]"}]}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"numMinSimIndice", "=", 
+     RowBox[{"numMinSim", "[", 
+      RowBox[{"[", 
+       RowBox[{"1", ",", "1"}], "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"percorsoMinimo", "=", 
+     RowBox[{"memorizzaPercorsi", "[", 
+      RowBox[{"[", "numMinSimIndice", "]"}], "]"}]}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"Print", "[", "\"\<Percorso Minimo:\>\"", "]"}], ";"}], "\n", 
+   RowBox[{
+    RowBox[{"stampaNomiPercorsoMinimo", "[", "percorsoMinimo", "]"}], ";"}], 
+   "\n", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Creazione", " ", "della", " ", "stringa", " ", "con", " ", "info", " ", 
+     "sulla", " ", "simulazione"}], "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"info", "=", 
+     RowBox[{"\"\<\\nStep = \>\"", "<>", 
+      RowBox[{"ToString", "[", "rip", "]"}], "<>", "\"\<, \[Beta] = \>\"", "<>", 
+      RowBox[{"ToString", "[", 
+       RowBox[{"beta", ",", "InputForm"}], "]"}], "<>", "\"\<, \>\"", "<>", 
+      RowBox[{"ToString", "[", "n", "]"}], "<>", "\"\< citt\[AGrave]\>\""}]}],
+     ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{"Plot", " ", "dei", " ", "risultati"}], "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"ListPlot", "[", 
+    RowBox[{"minimi", ",", 
+     RowBox[{"AxesLabel", "->", 
+      RowBox[{"{", 
+       RowBox[{"\"\<Test\>\"", ",", "\"\<Lunghezza percorso [km]\>\""}], 
+       "}"}]}], ",", 
+     RowBox[{"PlotLabel", "->", 
+      RowBox[{"\"\<Lunghezze percorsi minimi\>\"", "<>", "info"}]}]}], "]"}], 
+   "\n", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Calcolo", " ", "della", " ", "percentuale", " ", "di", " ", 
+     "accettazione"}], "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"percAccettazione", "=", 
+     RowBox[{"N", "[", 
+      RowBox[{
+       RowBox[{"100", "*", 
+        RowBox[{"(", 
+         RowBox[{"numAccettazioni", "/", "rip"}], ")"}]}], ",", "3"}], 
+      "]"}]}], ";"}], "\n", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Lista", " ", "di", " ", "grafici", " ", "per", " ", "ogni", " ", 
+     "valore", " ", "di", " ", "beta"}], "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"grafici", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"ListPlot", "[", 
+        RowBox[{
+         RowBox[{"storia", "[", 
+          RowBox[{"[", "i", "]"}], "]"}], ",", 
+         RowBox[{"PlotMarkers", "->", 
+          RowBox[{"{", 
+           RowBox[{"\[FilledSquare]", ",", "0.001"}], "}"}]}], ",", 
+         RowBox[{"PlotStyle", "->", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"GridLines", "->", "Automatic"}], ",", 
+            RowBox[{"RGBColor", "[", 
+             RowBox[{"0.55", ",", "0", ",", "0"}], "]"}]}], "}"}]}], ",", 
+         RowBox[{"AxesLabel", "->", 
+          RowBox[{"{", 
+           RowBox[{"\"\<Step\>\"", ",", "\"\<Lunghezza percorso [km]\>\""}], 
+           "}"}]}], ",", 
+         RowBox[{"PlotLabel", "->", 
+          RowBox[{"\"\<Evoluzione costo per beta \>\"", "<>", 
+           RowBox[{"ToString", "[", "beta", "]"}], "<>", 
+           "\"\<, numero di citt\[AGrave]: \>\"", "<>", 
+           RowBox[{"ToString", "[", "n", "]"}], "<>", 
+           "\"\<, simulazione n\[Degree]\>\"", "<>", 
+           RowBox[{"ToString", "[", "i", "]"}]}]}], ",", 
+         RowBox[{"GridLines", "->", "Automatic"}], ",", 
+         RowBox[{"Mesh", "->", "All"}], ",", 
+         RowBox[{"MeshStyle", "->", 
+          RowBox[{"{", "Red", "}"}]}]}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "1", ",", "nTest"}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Mostra", " ", "i", " ", "grafici", " ", "in", " ", "una", " ", 
+     "griglia"}], "*)"}], "\n", 
+   RowBox[{"GraphicsGrid", "[", 
+    RowBox[{"Partition", "[", 
+     RowBox[{"grafici", ",", 
+      RowBox[{"UpTo", "[", "2", "]"}]}], "]"}], "]"}], "\n"}]}]], "Input",
+ CellChangeTimes->{
+  3.931852804979948*^9, {3.93185301798221*^9, 3.931853206325054*^9}, {
+   3.931853257403728*^9, 3.931853276995407*^9}, {3.9318534453963566`*^9, 
+   3.9318534534295216`*^9}, {3.931853492640486*^9, 3.931853523992092*^9}, {
+   3.931853835926079*^9, 3.931853839145853*^9}, {3.93185391049551*^9, 
+   3.931854051624349*^9}, {3.931854297790098*^9, 3.931854314263954*^9}, {
+   3.931854395651966*^9, 3.931854487291004*^9}, {3.931854594291448*^9, 
+   3.93185459559329*^9}, {3.9318547460707493`*^9, 3.931854785431862*^9}, 
+   3.9318548380013466`*^9, {3.9318548828311424`*^9, 3.9318548900043907`*^9}, {
+   3.931855005044155*^9, 3.9318550357660675`*^9}, {3.931855080417509*^9, 
+   3.931855109115492*^9}, 3.931855156255417*^9, {3.931855205469969*^9, 
+   3.931855266451889*^9}, {3.932010423826027*^9, 3.932010424169876*^9}, {
+   3.932010472012705*^9, 3.932010506075008*^9}, {3.932010553247317*^9, 
+   3.932010647126249*^9}, {3.932010682495495*^9, 3.93201068384037*^9}, {
+   3.932010782523294*^9, 3.932010784695961*^9}, {3.9320108816530046`*^9, 
+   3.932010939281402*^9}, {3.932010974821291*^9, 3.93201105404829*^9}, {
+   3.9320111574027233`*^9, 3.932011213461714*^9}, {3.9320112876295395`*^9, 
+   3.932011331621469*^9}, {3.932011388844887*^9, 3.932011391907078*^9}, {
+   3.9320114531109734`*^9, 3.932011519555162*^9}, {3.932011554393057*^9, 
+   3.9320115550960484`*^9}, {3.932011609283006*^9, 3.932011616095821*^9}, {
+   3.9320119198322287`*^9, 3.932011935117796*^9}, 3.9320122546663666`*^9, {
+   3.9320125221096907`*^9, 3.9320125454520397`*^9}, {3.932013679494852*^9, 
+   3.932013726804252*^9}, {3.9320137599521713`*^9, 3.9320137612650375`*^9}, {
+   3.9320138245860577`*^9, 3.932013840201868*^9}, {3.932013881044264*^9, 
+   3.932013882528721*^9}, {3.932014170659193*^9, 3.932014177817415*^9}, {
+   3.93201426264835*^9, 3.932014283311575*^9}, {3.932014452884966*^9, 
+   3.932014457901953*^9}, 3.932014773969221*^9, {3.932014950820635*^9, 
+   3.932014990204607*^9}, {3.932015032246675*^9, 3.932015032700191*^9}, {
+   3.932015120693283*^9, 3.932015131085516*^9}, {3.932015417174349*^9, 
+   3.932015438352901*^9}, {3.9320156434689436`*^9, 3.9320156437072287`*^9}, {
+   3.9320158452132044`*^9, 3.9320158585318203`*^9}, {3.932015892444013*^9, 
+   3.932015909712055*^9}, {3.932016141006084*^9, 3.932016146241108*^9}, {
+   3.932016236607117*^9, 3.932016236997673*^9}, {3.932017477632738*^9, 
+   3.9320174913557773`*^9}, {3.9320175619227962`*^9, 3.932017568221483*^9}, {
+   3.9320245147621193`*^9, 3.932024536284609*^9}, {3.9329963378232307`*^9, 
+   3.9329964478885746`*^9}, {3.9329964876601696`*^9, 
+   3.932996561727726*^9}},ExpressionUUID->"a4b41dd7-d281-5749-b637-\
+dcf3119e8252"],
+
+Cell[CellGroupData[{
+
+
+}, Open  ]],
+
+
+}, Open  ]],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{3.932024469875757*^9, 
+  3.9320246095941944`*^9},ExpressionUUID->"a694e96c-8624-5a40-bf15-\
+6a64afb3fa4e"],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.932024612845972*^9, 
+  3.932024612861595*^9}},ExpressionUUID->"e3dd95e2-3a2f-df40-b484-\
+cf040aabeb7b"],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.932016945627733*^9, 3.9320169493634014`*^9}, 
+   3.9320174943258495`*^9},
+ CellLabel->
+  "In[5580]:=",ExpressionUUID->"434fd508-c780-8e4e-88fd-2069711d7d53"]
+}, Open  ]]
+},
+WindowSize->{1141.2, 579.6},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
+Magnification:>0.75 Inherited,
+FrontEndVersion->"14.0 for Microsoft Windows (64-bit) (December 12, 2023)",
+StyleDefinitions->"ReverseColor.nb",
+ExpressionUUID->"931a982c-2074-2749-850a-eba919ddd54a"
+]
+(* End of Notebook Content *)
